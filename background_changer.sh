@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Diretório onde estão as imagens
-DIR="/home/hex/Pictures/"
+DIR="/home/user/Pictures/"
 
 # Comando que seleciona aleatoriamente um arquivo .jpg ou .png
 PIC=$(ls $DIR/*.jpg $DIR/*.png | shuf -n1)
