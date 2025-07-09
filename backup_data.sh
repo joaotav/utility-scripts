@@ -22,7 +22,7 @@ echo "Backing up home directory (excluding temp/cache folders)..."
 rsync -a --numeric-ids --info=progress2 \
   --exclude=".cache/" --exclude=".dbus/" --exclude=".dropbox/" \
   --exclude=".docker/" --exclude="node_modules/" \
-  --exclude="go/pkg/mod/"
+  --exclude="go/pkg/mod/" \
   "$HOME/" "$TMP_DIR/home/" || [[ $? == 24 ]]
 
 echo "Compressing backup data..."
