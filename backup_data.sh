@@ -22,14 +22,14 @@ echo "Backing up home directory (excluding temp/cache folders)..."
 rsync -a --numeric-ids --info=progress2 \
   --exclude=".cache/" --exclude=".dbus/" --exclude=".dropbox/" \
   --exclude=".docker/" --exclude="node_modules/" \
-  --exclude="go/pkg/mod/" \
+  --exclude="go/pkg/mod/"
   "$HOME/" "$TMP_DIR/home/" || [[ $? == 24 ]]
 
 echo "Compressing backup data..."
 tar -C "/tmp" -czf "$BACKUP_FILE" "system-backup-$DATE"
 
 echo "Cleaning up temporary files..."
-rm -rf "$TMP_DIR"
+rm -rf "$TMP_DIR" 2>/dev/null || true
 
 echo "Backup completed successfully: $BACKUP_FILE"
 echo "Backup size: $(du -h "$BACKUP_FILE" | cut -f1)"
