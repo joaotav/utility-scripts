@@ -6,7 +6,14 @@ DATE=$(date +"%Y-%b-%d")
 TMP_DIR="/tmp/system-backup-$DATE" 
 BACKUP_FILE="$HOME/Desktop/system-backup-$DATE.tar.gz"
 
-rm -rf "$TMP_DIR"
+if [ -d "$TMP_DIR" ]; then
+    echo "Previous backup directory exists. Attempting cleanup..."
+    sudo rm -rf "$TMP_DIR" 2>/dev/null || {
+        echo "Cannot remove previous backup data at: $TMP_DIR. Quitting"
+	exit 1
+    }
+fi
+
 mkdir -p "$TMP_DIR"
 
 echo "Backing up apt-clone data..."
