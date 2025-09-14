@@ -1,17 +1,78 @@
 #!/bin/bash
 set -e
 
+# Check for required argument
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <external_drive_path>"
+    echo "Example: $0 /media/$USER/MyBackupDrive"
+    echo "Example: $0 /mnt/backup-usb"
+    echo ""
+    echo "Available mounted drives:"
+    ls -la "/media/$USER/" 2>/dev/null || echo "No drives found in /media/$USER/"
+    exit 1
+fi
+
 # Set variables
 DATE=$(date +"%Y-%b-%d")
-TMP_DIR="/tmp/system-backup-$DATE" 
-BORG_REPO="${BORG_REPO:-$HOME/Desktop/backups}"
+TMP_DIR="/tmp/system-backup-$DATE"
+EXTERNAL_DRIVE="$1"
+BORG_REPO="$EXTERNAL_DRIVE/system-backups"
 ARCHIVE_NAME="system-backup-$DATE"
+
+# Check if external drive path exists
+echo "Checking backup drive: $EXTERNAL_DRIVE"
+if [ ! -d "$EXTERNAL_DRIVE" ]; then
+    echo "Error: Drive path '$EXTERNAL_DRIVE' not found or not mounted."
+    echo ""
+    echo "Available mounted drives:"
+    ls -la "/media/$USER/" 2>/dev/null || echo "No drives found in /media/$USER/"
+    exit 1
+fi
+
+echo "Using backup drive: $EXTERNAL_DRIVE"
+echo "Borg repository: $BORG_REPO"
+
+# Function to prompt for encryption passphrase
+prompt_for_passphrase() {
+    local pass1 pass2
+    while true; do
+        echo -n "Enter encryption passphrase: "
+        read -s pass1
+        echo
+        echo -n "Confirm encryption passphrase: "
+        read -s pass2
+        echo
+        
+        if [ "$pass1" = "$pass2" ]; then
+            if [ -z "$pass1" ]; then
+                echo "Error: Passphrase cannot be empty. Please try again."
+                continue
+            fi
+            export BORG_PASSPHRASE="$pass1"
+            echo "Passphrases match. Repository will be encrypted."
+            break
+        else
+            echo "Error: Passphrases do not match. Please try again."
+        fi
+    done
+}
 
 # Initialize borg repo if it doesn't exist
 if [ ! -d "$BORG_REPO" ]; then
-    echo "Initializing Borg repository at $BORG_REPO..."
+    echo "Initializing new encrypted Borg repository at $BORG_REPO..."
+    prompt_for_passphrase
     mkdir -p "$BORG_REPO"
-    borg init --encryption=none "$BORG_REPO"
+    borg init --encryption=repokey "$BORG_REPO"
+    echo "Repository initialized successfully!"
+    echo "Your encryption key is stored in the repository (encrypted with your passphrase)."
+else
+    # For existing repo, prompt for passphrase
+    if [ -z "$BORG_PASSPHRASE" ]; then
+        echo -n "Enter repository passphrase: "
+        read -s BORG_PASSPHRASE
+        echo
+        export BORG_PASSPHRASE
+    fi
 fi
 
 if [ -d "$TMP_DIR" ]; then
